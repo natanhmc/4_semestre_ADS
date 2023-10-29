@@ -1,0 +1,2 @@
+Foi implementada a aula 9 com o quick sort, foi feito também um
+ dojo com teste de mesa do algoritmo para fixação.
