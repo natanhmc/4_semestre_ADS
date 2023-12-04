@@ -64,6 +64,7 @@ def listar_contatos():
     
     conn.close()
     return contatos
+
 def excluir_contato(nome, perfil_linkedin):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
