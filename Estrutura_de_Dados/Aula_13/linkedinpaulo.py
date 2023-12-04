@@ -222,30 +222,26 @@ def encontrar_caminho_mais_curto(contato1_id=int, contato2_id=int):
     distancia_minima = distancias[contato2_id]
     print(f"A distância mínima entre os contatos {contato1_id} e {contato2_id} é: {distancia_minima}")
 
-
-
 def dijkstra(graph, start):
-    # Inicialização do algoritmo
-    distances = {contact: float('infinity') for contact in graph}
+    distances = {node: float('inf') for node in graph}
     distances[start] = 0
+
     priority_queue = [(0, start)]
 
     while priority_queue:
-        current_distance, current_contact = heapq.heappop(priority_queue)
+        current_distance, current_node = heapq.heappop(priority_queue)
 
-        if current_distance > distances[current_contact]:
+        if current_distance > distances[current_node]:
             continue
-        # for neighbor, weight in graph.get(current_contact, []):
-        for neighbor, weight in graph[current_contact]:
+
+        for neighbor, weight in graph[current_node]:
             distance = current_distance + weight
 
             if distance < distances[neighbor]:
                 distances[neighbor] = distance
                 heapq.heappush(priority_queue, (distance, neighbor))
-                # heapq.heappush(priority_queue, (distance, str(neighbor)))
 
     return distances
-
 
 
 # Função principal do menu
