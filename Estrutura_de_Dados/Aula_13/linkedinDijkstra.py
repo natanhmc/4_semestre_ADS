@@ -8,7 +8,7 @@ db_config = {
     'database':'linkedin123',
     'port':3306
 }
-# Função para criar o banco de dados
+
 def criar_banco():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
@@ -34,7 +34,7 @@ def criar_banco():
     conn.commit()
     conn.close()
 
-# Função para adicionar um contato
+
 def adicionar_contato(nome, perfil_linkedin):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
@@ -52,7 +52,6 @@ def adicionar_contato(nome, perfil_linkedin):
 
     conn.close()
 
-# Função para listar contatos
 def listar_contatos():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
@@ -63,7 +62,7 @@ def listar_contatos():
     conn.close()
     return contatos
 
-# Função para adicionar uma conexão
+
 def adicionar_conexao(contato1_id, contato2_id):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
@@ -87,13 +86,12 @@ def adicionar_conexao(contato1_id, contato2_id):
         
     conn.close()
 
-# Função para listar conexões de um contato
 def listar_conexoes(contato_id):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT contatos.nome
+        SELECT contatos.id
         FROM contatos
         JOIN conexoes ON contatos.id = CASE
             WHEN conexoes.contato1_id = %s THEN conexoes.contato2_id
@@ -146,7 +144,7 @@ def encontrar_contatos_sem_conexao():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
-    # Seleciona todos os contatos que não têm conexões
+
     cursor.execute('''
         SELECT contatos.id, contatos.nome
         FROM contatos
@@ -192,33 +190,30 @@ def adicionar_conexoes_ao_grafo(graph, conexoes):
     for conexao in conexoes:
         contato_id, _ = conexao[0], conexao[1]
 
-        # Adiciona as conexões ao grafo
+
         for outra_conexao in conexoes:
             outra_contato_id, _ = outra_conexao[0], outra_conexao[1]
 
             if contato_id != outra_contato_id and (outra_contato_id, 1) not in graph[contato_id]:
-                graph[contato_id].append((outra_contato_id, 1))  # Adiciona a conexão com peso 1
+                graph[contato_id].append((outra_contato_id, 1)) 
 
     return graph
 
 def encontrar_caminho_mais_curto(contato1_id=int, contato2_id=int):
-    # Obtém as conexões do banco de dados
     conexoes = listar_conexoes(contato1_id,) + listar_conexoes(contato2_id,)
 
-    # Construir o grafo a partir das conexões no banco de dados
+
     graph = construir_grafo(conexoes)
     graph = adicionar_conexoes_ao_grafo(graph, conexoes)
 
-    # Exibir o grafo antes de executar o algoritmo de Dijkstra
     print("Grafo:")
     for key, value in graph.items():
         print(f"{key}: {value}")
 
-    # Executar o algoritmo de Dijkstra
-    distancias = dijkstra(graph, int(contato1_id))  # Certifique-se de converter para inteiro
-    contato2_id = int(contato2_id)  # Certifique-se de converter para inteiro
+    distancias = dijkstra(graph, int(contato1_id))  
+    contato2_id = int(contato2_id)
 
-    # Mostrar a distância mínima entre os dois contatos
+
     distancia_minima = distancias[contato2_id]
     print(f"A distância mínima entre os contatos {contato1_id} e {contato2_id} é: {distancia_minima}")
 
@@ -244,7 +239,6 @@ def dijkstra(graph, start):
     return distances
 
 
-# Função principal do menu
 def menu():
     while True:
         print("\n1. Adicionar Contato")
