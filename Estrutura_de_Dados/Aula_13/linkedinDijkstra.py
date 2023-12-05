@@ -122,19 +122,17 @@ def excluir_conexao(id1, id2):
     conn.close()
 
 
+
+
 def listar_conexoes(contato_id):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT contatos.id, contatos.nome
-        FROM contatos
-        JOIN conexoes ON contatos.id = CASE
-            WHEN conexoes.contato1_id = %s THEN conexoes.contato2_id
-            ELSE conexoes.contato1_id
-        END
-        WHERE conexoes.contato1_id = %s OR conexoes.contato2_id = %s
-    ''', (contato_id, contato_id, contato_id))
+        SELECT contato1_id, contato2_id
+        FROM conexoes
+        WHERE contato1_id = %s OR contato2_id = %s
+    ''', (contato_id, contato_id))
 
     conexoes = cursor.fetchall()
     conn.close()
@@ -160,74 +158,76 @@ def encontrar_contatos_sem_conexao():
     return contatos_sem_conexao
 
 
+
 def construir_grafo(conexoes):
     graph = {}
 
     for conexao in conexoes:
-        contato_id, contato_nome = conexao[0], conexao[1]
+        contato1_id, contato2_id = conexao[0], conexao[1]
 
-        if contato_id not in graph:
-            graph[contato_id] = []
+        if contato1_id not in graph:
+            graph[contato1_id] = []
+        if contato2_id not in graph:
+            graph[contato2_id] = []
+
+
+        graph[contato1_id].append((contato2_id, 1))  
+        graph[contato2_id].append((contato1_id, 1)) 
 
     return graph
 
-# def construir_grafo(conexoes):
-#     graph = {}
 
-#     for contato1_id, contato2_id in conexoes:
-#         if contato1_id not in graph:
-#             graph[contato1_id] = []
-#         if contato2_id not in graph:
-#             graph[contato2_id] = []
-
-#         # Adiciona as conexões ao grafo
-#         graph[contato1_id].append((contato2_id, 1))  # Adiciona a conexão com peso 1
-#         graph[contato2_id].append((contato1_id, 1))  # Caso o grafo seja não direcionado, adicione a conexão inversa
-
-#     return graph
 
 def adicionar_conexoes_ao_grafo(graph, conexoes):
     for conexao in conexoes:
         contato_id, _ = conexao[0], conexao[1]
 
-
         for outra_conexao in conexoes:
             outra_contato_id, _ = outra_conexao[0], outra_conexao[1]
 
             if contato_id != outra_contato_id and (outra_contato_id, 1) not in graph[contato_id]:
-                graph[contato_id].append((outra_contato_id, 1)) 
+                graph[contato_id].append((outra_contato_id, 1))
 
     return graph
 
-def encontrar_caminho_mais_curto(contato1_id=int, contato2_id=int):
-    conexoes = listar_conexoes(contato1_id,) + listar_conexoes(contato2_id,)
 
+
+def encontrar_caminho_mais_curto(contato1_id=int, contato2_id=int):
+    conexoes = listar_conexoes(contato1_id) + listar_conexoes(contato2_id)
 
     graph = construir_grafo(conexoes)
-    graph = adicionar_conexoes_ao_grafo(graph, conexoes)
 
     print("Grafo:")
     for key, value in graph.items():
         print(f"{key}: {value}")
 
-    distancias = dijkstra(graph, int(contato1_id))  
-    contato2_id = int(contato2_id)
+    caminho_minimo = dijkstra(graph, int(contato1_id), int(contato2_id))
+
+    if caminho_minimo is not None:
+        distancia_minima, caminho = caminho_minimo
+        print(f"A distância mínima entre os contatos {contato1_id} e {contato2_id} é: {distancia_minima}")
+        print(f"Caminho: {caminho}")
+    else:
+        print(f"Não há caminho entre os contatos {contato1_id} e {contato2_id}")
 
 
-    distancia_minima = distancias[contato2_id]
-    print(f"A distância mínima entre os contatos {contato1_id} e {contato2_id} é: {distancia_minima}")
-
-def dijkstra(graph, start):
+def dijkstra(graph, start, end):
     distances = {node: float('inf') for node in graph}
     distances[start] = 0
 
     priority_queue = [(0, start)]
+    visited = set()
 
     while priority_queue:
         current_distance, current_node = heapq.heappop(priority_queue)
 
-        if current_distance > distances[current_node]:
+        if current_node == end:
+            return current_distance, visited
+
+        if current_node in visited:
             continue
+
+        visited.add(current_node)
 
         for neighbor, weight in graph[current_node]:
             distance = current_distance + weight
@@ -236,7 +236,7 @@ def dijkstra(graph, start):
                 distances[neighbor] = distance
                 heapq.heappush(priority_queue, (distance, neighbor))
 
-    return distances
+    return None
 
 
 def menu():
